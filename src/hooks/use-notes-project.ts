@@ -72,6 +72,7 @@ export function useNotesProject() {
       try {
         const blocks: Block[] = [];
         let base = 0;
+        let last = 0;
         for (let i = 0; i < parts.length; i++) {
           let attempt = 0;
           while (true) {
@@ -85,10 +86,13 @@ export function useNotesProject() {
                   partCount: parts.length,
                 },
                 ctrl.signal,
-                (chars) => setProgress((pr) => ({ ...pr, [lessonId]: base + chars })),
+                (chars) => {
+                  last = chars;
+                  setProgress((pr) => ({ ...pr, [lessonId]: base + chars }));
+                },
               );
               blocks.push(...normalizeBlocks(raw, known));
-              base = (progress[lessonId] ?? 0) + base;
+              base += last;
               break;
             } catch (err) {
               const info = friendlyError(err);
@@ -114,7 +118,6 @@ export function useNotesProject() {
         controllers.current.delete(lessonId);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [updateLesson],
   );
 
