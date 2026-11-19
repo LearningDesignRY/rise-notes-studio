@@ -146,7 +146,7 @@ export async function collectText(pdfjs: PdfJs, page: PDFPageProxy, pageNum: num
   const rows: RawRun[][] = [];
   for (const r of runs) {
     const row = rows[rows.length - 1];
-    if (row && Math.abs(row[0].baseline - r.baseline) < Math.max(1.5, r.size * 0.25)) row.push(r);
+    if (row?.[0] && Math.abs(row[0].baseline - r.baseline) < Math.max(1.5, r.size * 0.25)) row.push(r);
     else rows.push([r]);
   }
   const lines: TextLine[] = [];
@@ -163,7 +163,8 @@ export async function collectText(pdfjs: PdfJs, page: PDFPageProxy, pageNum: num
         if (prev && s.x - prev.xEnd > s.size * 0.15 && !/\s$/.test(prev.text) && !/^\s/.test(text)) text = " " + text;
         out.push({ text, bold: s.bold, italic: s.italic });
       });
-      const line: TextLine = { kind: "text", page: pageNum, x: seg[0].x, y: seg[0].baseline - size, size, runs: out };
+      const first = seg[0]!;
+      const line: TextLine = { kind: "text", page: pageNum, x: first.x, y: first.baseline - size, size, runs: out };
       if (lineText(line)) lines.push(line);
       seg = [];
     };
@@ -230,16 +231,16 @@ function objToCanvas(o: unknown): HTMLCanvasElement | null {
     d.set(src.subarray(0, d.length));
   } else if (img.kind === 2) {
     for (let i = 0, j = 0; j < d.length && i + 2 < src.length; i += 3, j += 4) {
-      d[j] = src[i];
-      d[j + 1] = src[i + 1];
-      d[j + 2] = src[i + 2];
+      d[j] = src[i]!;
+      d[j + 1] = src[i + 1]!;
+      d[j + 2] = src[i + 2]!;
       d[j + 3] = 255;
     }
   } else if (img.kind === 1) {
     const rowBytes = (w + 7) >> 3;
     for (let y = 0; y < h; y++)
       for (let x = 0; x < w; x++) {
-        const bit = (src[y * rowBytes + (x >> 3)] >> (7 - (x & 7))) & 1;
+        const bit = (src[y * rowBytes + (x >> 3)]! >> (7 - (x & 7))) & 1;
         const v = bit ? 255 : 0;
         const j = (y * w + x) * 4;
         d[j] = d[j + 1] = d[j + 2] = v;
@@ -290,7 +291,7 @@ function signature(c: HTMLCanvasElement): string {
   ctx.drawImage(c, 0, 0, 12, 12);
   const d = ctx.getImageData(0, 0, 12, 12).data;
   let out = `${Math.round((c.width / c.height) * 20)}:`;
-  for (let i = 0; i < d.length; i += 4) out += ((d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11) >> 4).toString(16);
+  for (let i = 0; i < d.length; i += 4) out += ((d[i]! * 0.3 + d[i + 1]! * 0.59 + d[i + 2]! * 0.11) >> 4).toString(16);
   return out;
 }
 
@@ -298,7 +299,7 @@ function hasAlpha(c: HTMLCanvasElement): boolean {
   const ctx = c.getContext("2d", { willReadFrequently: true })!;
   const step = Math.max(1, Math.floor((c.width * c.height) / 40000));
   const d = ctx.getImageData(0, 0, c.width, c.height).data;
-  for (let i = 3; i < d.length; i += 4 * step) if (d[i] < 250) return true;
+  for (let i = 3; i < d.length; i += 4 * step) if (d[i]! < 250) return true;
   return false;
 }
 
@@ -320,9 +321,10 @@ function orderMarkers(obs: MarkerObs[]): Marker[] {
   const ordered: Marker[] = [];
   const near = (a: Marker, b: Marker) => Math.hypot(a.x - b.x, a.y - b.y) < 0.04;
   for (const o of obs) {
-    if (o.points.length !== 1) continue;
-    const idx = positions.findIndex((p) => near(p, o.points[0]));
-    if (idx >= 0) ordered.push(positions.splice(idx, 1)[0]);
+    const only = o.points[0];
+    if (o.points.length !== 1 || !only) continue;
+    const idx = positions.findIndex((p) => near(p, only));
+    if (idx >= 0) ordered.push(...positions.splice(idx, 1));
   }
   positions.sort((a, b) => a.y - b.y || a.x - b.x);
   return [...ordered, ...positions];
@@ -416,7 +418,7 @@ export async function extractPdf(
     const img = images.get(id);
     if (img) img.meta.markers = orderMarkers(obs);
   }
-  await doc.destroy();
+  await doc.loadingTask.destroy();
   return { pageCount: pages.length, pages, images: [...images.values()] };
 }
 
@@ -427,6 +429,6 @@ export async function renderPage(data: ArrayBuffer, pageNum: number, scale: numb
     const page = await doc.getPage(pageNum);
     return await renderPageCanvas(page, scale);
   } finally {
-    await doc.destroy();
+    await doc.loadingTask.destroy();
   }
 }

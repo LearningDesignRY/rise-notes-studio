@@ -44,7 +44,7 @@ function errorInfo(error: unknown): { status: number; message: string } {
  *   {"t":"d","v":"<json text delta>"} ... {"t":"done"}  or  {"t":"error","status":402,"message":"..."}
  */
 export async function handleConvertLesson(request: Request): Promise<Response> {
-  const apiKey = process.env.LOVABLE_API_KEY;
+  const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) {
     return Response.json({ message: "The AI service isn't configured." }, { status: 401 });
   }

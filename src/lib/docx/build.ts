@@ -24,8 +24,9 @@ import {
 } from "docx";
 
 import { figureNumbers, isExported } from "@/lib/notes/normalize";
+import { ICON_FOR } from "@/lib/notes/icons";
 import { paragraphsOf, parseInline } from "@/lib/notes/inline";
-import { CALLOUT_LABELS, DISCLAIMER, FOOTER_LINE, type Block, type CalloutVariant, type Project } from "@/lib/notes/types";
+import { CALLOUT_LABELS, DISCLAIMER, FOOTER_LINE, type Block, type Project } from "@/lib/notes/types";
 
 export interface DocImage {
   data: Uint8Array;
@@ -57,24 +58,6 @@ const LIGHT = "F4F4F4";
 const CONTENT_PX = 624; // 6.5in at 96 dpi
 const CONTENT_DXA = 9360;
 
-export const ICON_FOR: Record<CalloutVariant | "video", string> = {
-  quick_insight: "information",
-  good_practice: "good-practice",
-  key_concept: "key-concept",
-  important: "important",
-  information: "information",
-  example: "example",
-  question: "question",
-  pause_reflect: "pause-and-reflect",
-  case_study: "case-study",
-  legal_case_study: "legal-case-study",
-  practical_activity: "practical-activity",
-  reading_activity: "reading-activity",
-  listen: "listen",
-  interaction: "online-interactivity",
-  completion_time: "completion-time",
-  video: "video",
-};
 
 function runs(text: string, base: { bold?: boolean; italic?: boolean; size?: number; color?: string } = {}): TextRun[] {
   return parseInline(text).map(
