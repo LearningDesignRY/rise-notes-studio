@@ -25,8 +25,13 @@ export function loadPdfjs(): Promise<PdfJs> {
 
 export async function openPdf(data: ArrayBuffer): Promise<PDFDocumentProxy> {
   const pdfjs = await loadPdfjs();
-  return pdfjs.getDocument({ data: new Uint8Array(data.slice(0)), fontExtraProperties: true })
-    .promise;
+  // Decoders (JPEG 2000 / JBIG2) and standard fonts are served from public/pdfjs.
+  return pdfjs.getDocument({
+    data: new Uint8Array(data.slice(0)),
+    fontExtraProperties: true,
+    wasmUrl: "/pdfjs/wasm/",
+    standardFontDataUrl: "/pdfjs/standard_fonts/",
+  }).promise;
 }
 
 export interface ExtractedImage {

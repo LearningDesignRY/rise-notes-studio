@@ -28,3 +28,10 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Project architecture
+
+- PDF reading, image extraction, project storage (IndexedDB) and Word export all run in the browser; only the per-lesson AI conversion runs on the server (`/api/convert-lesson`). Why: single user, no accounts or database needed, and large PDFs never leave the machine except as lesson text.
+- Browser-only modules use the `.browser.ts` suffix, not `.client.ts`. Why: `.client.*` files are blocked from the server render graph and break page load.
+- pdf.js image decoders and standard fonts are served from `public/pdfjs/` (copied from `node_modules/pdfjs-dist`). Why: Rise exports contain JPEG 2000 images that pdf.js can't decode without them; re-copy after upgrading pdfjs-dist.
+- Docx text runs only ever switch bold/italic on, never off. Why: explicit `false` overrides heading styles.

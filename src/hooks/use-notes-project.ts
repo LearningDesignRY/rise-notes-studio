@@ -3,7 +3,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { convertPart, friendlyError } from "@/lib/notes/convert.browser";
 import { primeImageUrl } from "@/lib/notes/image-urls.browser";
 import { newId, normalizeBlocks } from "@/lib/notes/normalize";
-import { clearAll, loadProject, savePdf, saveImage, saveProject } from "@/lib/notes/storage.browser";
+import {
+  clearAll,
+  loadProject,
+  savePdf,
+  saveImage,
+  saveProject,
+} from "@/lib/notes/storage.browser";
 import {
   DEFAULT_SETTINGS,
   type Block,

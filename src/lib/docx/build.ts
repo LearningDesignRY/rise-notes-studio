@@ -72,8 +72,9 @@ function runs(
     (r) =>
       new TextRun({
         text: r.text,
-        bold: base.bold || r.bold,
-        italics: base.italic || r.italic,
+        // Only switch formatting on, so heading styles keep their own bold.
+        ...(base.bold || r.bold ? { bold: true } : {}),
+        ...(base.italic || r.italic ? { italics: true } : {}),
         ...(base.size ? { size: base.size } : {}),
         ...(base.color ? { color: base.color } : {}),
       }),
@@ -192,7 +193,7 @@ function numberedItems(
           children: runs(it.title, { bold: true }),
         }),
       );
-      for (const p of paragraphsOf(it.text)) out.push(body(p));
+      for (const p of paragraphsOf(it.text)) out.push(body(p, { indent: 720 }));
     } else {
       const paras = paragraphsOf(it.title ? `**${it.title}** ${it.text}` : it.text);
       paras.forEach((p, i) =>
