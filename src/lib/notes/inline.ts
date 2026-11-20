@@ -19,7 +19,7 @@ export function parseInline(src: string): InlineRun[] {
       push();
       bold = !bold;
       i++;
-    } else if (src[i] === "*" && /\S/.test(src[i + 1] ?? "") !== /\S/.test(src[i - 1] ?? "") ) {
+    } else if (src[i] === "*" && /\S/.test(src[i + 1] ?? "") !== /\S/.test(src[i - 1] ?? "")) {
       push();
       italic = !italic;
     } else if (src[i] === "*" && italic) {

@@ -1,10 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { convertPart, friendlyError } from "@/lib/notes/convert.client";
-import { primeImageUrl } from "@/lib/notes/image-urls.client";
+import { convertPart, friendlyError } from "@/lib/notes/convert.browser";
+import { primeImageUrl } from "@/lib/notes/image-urls.browser";
 import { newId, normalizeBlocks } from "@/lib/notes/normalize";
-import { clearAll, loadProject, savePdf, saveImage, saveProject } from "@/lib/notes/storage.client";
-import { DEFAULT_SETTINGS, type Block, type ImageMeta, type Lesson, type Project } from "@/lib/notes/types";
+import { clearAll, loadProject, savePdf, saveImage, saveProject } from "@/lib/notes/storage.browser";
+import {
+  DEFAULT_SETTINGS,
+  type Block,
+  type ImageMeta,
+  type Lesson,
+  type Project,
+} from "@/lib/notes/types";
 
 export type Phase = "loading" | "empty" | "reading" | "working";
 
@@ -81,7 +87,7 @@ export function useNotesProject() {
                 {
                   lessonTitle: lesson.title,
                   moduleTitle: p.moduleTitle,
-                  text: parts[i],
+                  text: parts[i] ?? "",
                   part: i + 1,
                   partCount: parts.length,
                 },
@@ -136,7 +142,8 @@ export function useNotesProject() {
       haltRef.current = false;
       setHalt(null);
       const idle = queue.current.length === 0 && controllers.current.size === 0;
-      for (const id of ids) if (!queue.current.includes(id) && !controllers.current.has(id)) queue.current.push(id);
+      for (const id of ids)
+        if (!queue.current.includes(id) && !controllers.current.has(id)) queue.current.push(id);
       if (idle) void pump();
     },
     [pump],
@@ -152,7 +159,7 @@ export function useNotesProject() {
       await clearAll();
       const data = await file.arrayBuffer();
       await savePdf(data);
-      const { extractPdf } = await import("@/lib/pdf/extract.client");
+      const { extractPdf } = await import("@/lib/pdf/extract.browser");
       const { splitLessons } = await import("@/lib/pdf/serialize");
       const result = await extractPdf(data, (page, total) => setReadProgress({ page, total }));
       const images: Record<string, ImageMeta> = {};

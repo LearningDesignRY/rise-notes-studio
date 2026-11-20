@@ -25,7 +25,8 @@ export function loadPdfjs(): Promise<PdfJs> {
 
 export async function openPdf(data: ArrayBuffer): Promise<PDFDocumentProxy> {
   const pdfjs = await loadPdfjs();
-  return pdfjs.getDocument({ data: new Uint8Array(data.slice(0)), fontExtraProperties: true }).promise;
+  return pdfjs.getDocument({ data: new Uint8Array(data.slice(0)), fontExtraProperties: true })
+    .promise;
 }
 
 export interface ExtractedImage {
@@ -68,7 +69,11 @@ interface RawRun extends TextRun {
 const PRIVATE_USE = /[\uE000-\uF8FF]/g;
 const MAX_SIDE = 2000;
 
-export function collectImageDraws(pdfjs: PdfJs, page: PDFPageProxy, ops: { fnArray: number[]; argsArray: unknown[][] }) {
+export function collectImageDraws(
+  pdfjs: PdfJs,
+  page: PDFPageProxy,
+  ops: { fnArray: number[]; argsArray: unknown[][] },
+) {
   const vp = page.getViewport({ scale: 1 });
   const O = pdfjs.OPS;
   let ctm: Matrix = [1, 0, 0, 1, 0, 0];
@@ -119,7 +124,11 @@ function fontFlags(page: PDFPageProxy, fontName: string): { bold: boolean; itali
   return { bold, italic };
 }
 
-export async function collectText(pdfjs: PdfJs, page: PDFPageProxy, pageNum: number): Promise<TextLine[]> {
+export async function collectText(
+  pdfjs: PdfJs,
+  page: PDFPageProxy,
+  pageNum: number,
+): Promise<TextLine[]> {
   const vp = page.getViewport({ scale: 1 });
   const tc = await page.getTextContent();
   const runs: RawRun[] = [];
@@ -146,7 +155,8 @@ export async function collectText(pdfjs: PdfJs, page: PDFPageProxy, pageNum: num
   const rows: RawRun[][] = [];
   for (const r of runs) {
     const row = rows[rows.length - 1];
-    if (row?.[0] && Math.abs(row[0].baseline - r.baseline) < Math.max(1.5, r.size * 0.25)) row.push(r);
+    if (row?.[0] && Math.abs(row[0].baseline - r.baseline) < Math.max(1.5, r.size * 0.25))
+      row.push(r);
     else rows.push([r]);
   }
   const lines: TextLine[] = [];
@@ -160,11 +170,19 @@ export async function collectText(pdfjs: PdfJs, page: PDFPageProxy, pageNum: num
       seg.forEach((s, i) => {
         const prev = seg[i - 1];
         let text = s.text;
-        if (prev && s.x - prev.xEnd > s.size * 0.15 && !/\s$/.test(prev.text) && !/^\s/.test(text)) text = " " + text;
+        if (prev && s.x - prev.xEnd > s.size * 0.15 && !/\s$/.test(prev.text) && !/^\s/.test(text))
+          text = " " + text;
         out.push({ text, bold: s.bold, italic: s.italic });
       });
       const first = seg[0]!;
-      const line: TextLine = { kind: "text", page: pageNum, x: first.x, y: first.baseline - size, size, runs: out };
+      const line: TextLine = {
+        kind: "text",
+        page: pageNum,
+        x: first.x,
+        y: first.baseline - size,
+        size,
+        runs: out,
+      };
       if (lineText(line)) lines.push(line);
       seg = [];
     };
@@ -182,7 +200,12 @@ export async function collectText(pdfjs: PdfJs, page: PDFPageProxy, pageNum: num
     const t = lineText(l);
     if (/^\d{1,2}$/.test(t)) {
       const target = lines.find(
-        (o) => o !== l && !/^\d{1,2}$/.test(lineText(o)) && o.x > l.x + 15 && o.x < l.x + 120 && Math.abs(o.y - l.y) < 12,
+        (o) =>
+          o !== l &&
+          !/^\d{1,2}$/.test(lineText(o)) &&
+          o.x > l.x + 15 &&
+          o.x < l.x + 120 &&
+          Math.abs(o.y - l.y) < 12,
       );
       if (target) {
         target.runs = [{ text: `[#${t}] `, bold: false, italic: false }, ...target.runs];
@@ -211,7 +234,13 @@ async function getObj(page: PDFPageProxy, id: string): Promise<unknown> {
 }
 
 function objToCanvas(o: unknown): HTMLCanvasElement | null {
-  const img = o as { width?: number; height?: number; bitmap?: CanvasImageSource; data?: Uint8Array | Uint8ClampedArray; kind?: number } | null;
+  const img = o as {
+    width?: number;
+    height?: number;
+    bitmap?: CanvasImageSource;
+    data?: Uint8Array | Uint8ClampedArray;
+    kind?: number;
+  } | null;
   if (!img?.width || !img?.height) return null;
   const { width: w, height: h } = img;
   const c = document.createElement("canvas");
@@ -263,7 +292,13 @@ async function renderPageCanvas(page: PDFPageProxy, scale: number): Promise<HTML
   return canvas;
 }
 
-function cropCanvas(src: HTMLCanvasElement, x: number, y: number, w: number, h: number): HTMLCanvasElement {
+function cropCanvas(
+  src: HTMLCanvasElement,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+): HTMLCanvasElement {
   const c = document.createElement("canvas");
   c.width = Math.max(1, Math.round(w));
   c.height = Math.max(1, Math.round(h));
@@ -291,7 +326,8 @@ function signature(c: HTMLCanvasElement): string {
   ctx.drawImage(c, 0, 0, 12, 12);
   const d = ctx.getImageData(0, 0, 12, 12).data;
   let out = `${Math.round((c.width / c.height) * 20)}:`;
-  for (let i = 0; i < d.length; i += 4) out += ((d[i]! * 0.3 + d[i + 1]! * 0.59 + d[i + 2]! * 0.11) >> 4).toString(16);
+  for (let i = 0; i < d.length; i += 4)
+    out += ((d[i]! * 0.3 + d[i + 1]! * 0.59 + d[i + 2]! * 0.11) >> 4).toString(16);
   return out;
 }
 
@@ -303,7 +339,10 @@ function hasAlpha(c: HTMLCanvasElement): boolean {
   return false;
 }
 
-export function canvasToBlob(c: HTMLCanvasElement, mime: "image/png" | "image/jpeg"): Promise<Blob> {
+export function canvasToBlob(
+  c: HTMLCanvasElement,
+  mime: "image/png" | "image/jpeg",
+): Promise<Blob> {
   return new Promise((resolve, reject) =>
     c.toBlob((b) => (b ? resolve(b) : reject(new Error("Could not encode image"))), mime, 0.9),
   );
@@ -359,7 +398,13 @@ export async function extractPdf(
       let canvas = d.objId ? objToCanvas(await getObj(page, d.objId)) : objToCanvas(d.inline);
       if (!canvas) {
         pageCanvas ??= await renderPageCanvas(page, RENDER_SCALE);
-        canvas = cropCanvas(pageCanvas, d.x * RENDER_SCALE, d.y * RENDER_SCALE, d.w * RENDER_SCALE, d.h * RENDER_SCALE);
+        canvas = cropCanvas(
+          pageCanvas,
+          d.x * RENDER_SCALE,
+          d.y * RENDER_SCALE,
+          d.w * RENDER_SCALE,
+          d.h * RENDER_SCALE,
+        );
       }
       canvas = fitCanvas(canvas);
       const sig = signature(canvas);
@@ -373,7 +418,15 @@ export async function extractPdf(
         const blob = await canvasToBlob(canvas, mime);
         images.set(id, {
           blob,
-          meta: { id, width: canvas.width, height: canvas.height, mime, pages: [pn], markers: [], origin: "pdf" },
+          meta: {
+            id,
+            width: canvas.width,
+            height: canvas.height,
+            mime,
+            pages: [pn],
+            markers: [],
+            origin: "pdf",
+          },
         });
       } else {
         const meta = images.get(id)!.meta;
@@ -386,7 +439,10 @@ export async function extractPdf(
         return cx > d.x && cx < d.x + d.w && cy > d.y && cy < d.y + d.h && Math.max(s.w, s.h) <= 50;
       });
       if (pins.length) {
-        const pts = pins.map((s) => ({ x: (s.x + s.w / 2 - d.x) / d.w, y: (s.y + s.h / 2 - d.y) / d.h }));
+        const pts = pins.map((s) => ({
+          x: (s.x + s.w / 2 - d.x) / d.w,
+          y: (s.y + s.h / 2 - d.y) / d.h,
+        }));
         if (!markerObs.has(id)) markerObs.set(id, []);
         markerObs.get(id)!.push({ page: pn, points: pts });
       }
@@ -423,7 +479,11 @@ export async function extractPdf(
 }
 
 /** Render a whole page (for the snapshot picker). */
-export async function renderPage(data: ArrayBuffer, pageNum: number, scale: number): Promise<HTMLCanvasElement> {
+export async function renderPage(
+  data: ArrayBuffer,
+  pageNum: number,
+  scale: number,
+): Promise<HTMLCanvasElement> {
   const doc = await openPdf(data);
   try {
     const page = await doc.getPage(pageNum);

@@ -1,7 +1,7 @@
 import coverLogoUrl from "@/assets/brand/cover-logo.png";
 import headerMarkUrl from "@/assets/brand/header-amp.png";
 import { docxFileName } from "@/lib/notes/normalize";
-import { loadImage } from "@/lib/notes/storage.client";
+import { loadImage } from "@/lib/notes/storage.browser";
 import type { Marker, Project } from "@/lib/notes/types";
 
 import { buildDocx, type BrandAssets, type DocImage } from "./build";
@@ -77,7 +77,10 @@ async function loadBrand(): Promise<BrandAssets> {
       icons[key] = await urlToDocImage(url);
     }),
   );
-  const [coverLogo, headerMark] = await Promise.all([urlToDocImage(coverLogoUrl), urlToDocImage(headerMarkUrl)]);
+  const [coverLogo, headerMark] = await Promise.all([
+    urlToDocImage(coverLogoUrl),
+    urlToDocImage(headerMarkUrl),
+  ]);
   return { coverLogo, headerMark, icons };
 }
 

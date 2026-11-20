@@ -14,15 +14,17 @@ export function UploadPanel({ onFile }: { onFile: (file: File) => void }) {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-14">
-      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-red">New set of notes</p>
+      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-red">
+        New set of notes
+      </p>
       <h1 className="mt-3 font-display text-4xl font-semibold leading-tight md:text-5xl">
         Drop in a Rise PDF.
         <br />
         Get branded static notes back.
       </h1>
       <p className="mt-4 max-w-xl text-muted-foreground">
-        Each lesson is read, its interactions are rebuilt for paper, and you can check every block before downloading
-        the Word document.
+        Each lesson is read, its interactions are rebuilt for paper, and you can check every block
+        before downloading the Word document.
       </p>
 
       <button
@@ -47,7 +49,9 @@ export function UploadPanel({ onFile }: { onFile: (file: File) => void }) {
           <FileUp className="h-6 w-6" />
         </span>
         <span className="text-lg font-semibold">Choose the Rise PDF export</span>
-        <span className="text-sm text-muted-foreground">or drag it here · stays in your browser until converted</span>
+        <span className="text-sm text-muted-foreground">
+          or drag it here · stays in your browser until converted
+        </span>
       </button>
       <input
         ref={input}
@@ -60,9 +64,21 @@ export function UploadPanel({ onFile }: { onFile: (file: File) => void }) {
 
       <div className="mt-10 grid gap-4 sm:grid-cols-3">
         {[
-          { icon: LayoutList, title: "Lessons & blocks", text: "Topics become chapters; repeated interaction pages are merged." },
-          { icon: ImageIcon, title: "Pictures", text: "Photos are pulled out. Missing graphics get an IMAGE NEEDED box." },
-          { icon: FileText, title: "Word output", text: "Cover, contents, brand callouts, figures and footer, ready to edit." },
+          {
+            icon: LayoutList,
+            title: "Lessons & blocks",
+            text: "Topics become chapters; repeated interaction pages are merged.",
+          },
+          {
+            icon: ImageIcon,
+            title: "Pictures",
+            text: "Photos are pulled out. Missing graphics get an IMAGE NEEDED box.",
+          },
+          {
+            icon: FileText,
+            title: "Word output",
+            text: "Cover, contents, brand callouts, figures and footer, ready to edit.",
+          },
         ].map(({ icon: Icon, title, text }) => (
           <div key={title} className="rounded-lg border bg-card p-4">
             <Icon className="h-5 w-5 text-brand-red" />

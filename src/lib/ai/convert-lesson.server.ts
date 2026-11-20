@@ -121,7 +121,11 @@ export async function handleConvertLesson(request: Request): Promise<Response> {
         }
         if (!sentAny) {
           controller.enqueue(
-            line({ t: "error", status: 422, message: "The AI returned an empty answer for this lesson." }),
+            line({
+              t: "error",
+              status: 422,
+              message: "The AI returned an empty answer for this lesson.",
+            }),
           );
         } else {
           controller.enqueue(line({ t: "done" }));
@@ -141,7 +145,10 @@ export async function handleConvertLesson(request: Request): Promise<Response> {
 
   return withLovableAiGatewayRunIdHeader(
     new Response(stream, {
-      headers: { "content-type": "application/x-ndjson; charset=utf-8", "cache-control": "no-store" },
+      headers: {
+        "content-type": "application/x-ndjson; charset=utf-8",
+        "cache-control": "no-store",
+      },
     }),
     runIdFetch,
     undefined,

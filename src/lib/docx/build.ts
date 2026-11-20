@@ -26,7 +26,13 @@ import {
 import { figureNumbers, isExported } from "@/lib/notes/normalize";
 import { ICON_FOR } from "@/lib/notes/icons";
 import { paragraphsOf, parseInline } from "@/lib/notes/inline";
-import { CALLOUT_LABELS, DISCLAIMER, FOOTER_LINE, type Block, type Project } from "@/lib/notes/types";
+import {
+  CALLOUT_LABELS,
+  DISCLAIMER,
+  FOOTER_LINE,
+  type Block,
+  type Project,
+} from "@/lib/notes/types";
 
 export interface DocImage {
   data: Uint8Array;
@@ -58,24 +64,29 @@ const LIGHT = "F4F4F4";
 const CONTENT_PX = 624; // 6.5in at 96 dpi
 const CONTENT_DXA = 9360;
 
-
-function runs(text: string, base: { bold?: boolean; italic?: boolean; size?: number; color?: string } = {}): TextRun[] {
+function runs(
+  text: string,
+  base: { bold?: boolean; italic?: boolean; size?: number; color?: string } = {},
+): TextRun[] {
   return parseInline(text).map(
     (r) =>
       new TextRun({
         text: r.text,
         bold: base.bold || r.bold,
         italics: base.italic || r.italic,
-        size: base.size,
-        color: base.color,
+        ...(base.size ? { size: base.size } : {}),
+        ...(base.color ? { color: base.color } : {}),
       }),
   );
 }
 
-function body(text: string, opts: { bold?: boolean; italic?: boolean; align?: Align; indent?: number } = {}) {
+function body(
+  text: string,
+  opts: { bold?: boolean; italic?: boolean; align?: Align; indent?: number } = {},
+) {
   return new Paragraph({
     alignment: opts.align ?? AlignmentType.JUSTIFIED,
-    indent: opts.indent ? { left: opts.indent } : undefined,
+    ...(opts.indent ? { indent: { left: opts.indent } } : {}),
     children: runs(text, opts),
   });
 }
@@ -116,10 +127,21 @@ function iconRun(brand: BrandAssets, key: string): ParagraphChild[] {
 
 function noBorders() {
   const none = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
-  return { top: none, bottom: none, left: none, right: none, insideHorizontal: none, insideVertical: none };
+  return {
+    top: none,
+    bottom: none,
+    left: none,
+    right: none,
+    insideHorizontal: none,
+    insideVertical: none,
+  };
 }
 
-function boxedCell(children: Paragraph[], border: { style: (typeof BorderStyle)[keyof typeof BorderStyle]; size: number; color: string }, fill?: string): Table {
+function boxedCell(
+  children: Paragraph[],
+  border: { style: (typeof BorderStyle)[keyof typeof BorderStyle]; size: number; color: string },
+  fill?: string,
+): Table {
   return new Table({
     width: { size: CONTENT_DXA, type: WidthType.DXA },
     columnWidths: [CONTENT_DXA],
@@ -129,7 +151,7 @@ function boxedCell(children: Paragraph[], border: { style: (typeof BorderStyle)[
           new TableCell({
             width: { size: CONTENT_DXA, type: WidthType.DXA },
             borders: { top: border, bottom: border, left: border, right: border },
-            shading: fill ? { fill, type: ShadingType.CLEAR, color: "auto" } : undefined,
+            ...(fill ? { shading: { fill, type: ShadingType.CLEAR, color: "auto" } } : {}),
             margins: { top: 160, bottom: 160, left: 200, right: 200 },
             children,
           }),
@@ -143,7 +165,9 @@ function placeholderBox(label: string, lines: string[]): Table {
   return boxedCell(
     [
       new Paragraph({ children: [new TextRun({ text: label, bold: true, color: RED })] }),
-      ...lines.map((l) => new Paragraph({ alignment: AlignmentType.LEFT, children: runs(l, { size: 20 }) })),
+      ...lines.map(
+        (l) => new Paragraph({ alignment: AlignmentType.LEFT, children: runs(l, { size: 20 }) }),
+      ),
     ],
     { style: BorderStyle.SINGLE, size: 12, color: YELLOW },
     "FFF4D9",
@@ -152,7 +176,10 @@ function placeholderBox(label: string, lines: string[]): Table {
 
 let listInstance = 0;
 
-function numberedItems(items: { title: string | null; text: string }[], titled: boolean): Paragraph[] {
+function numberedItems(
+  items: { title: string | null; text: string }[],
+  titled: boolean,
+): Paragraph[] {
   const inst = ++listInstance;
   const out: Paragraph[] = [];
   for (const it of items) {
@@ -184,12 +211,20 @@ function numberedItems(items: { title: string | null; text: string }[], titled: 
   return out;
 }
 
-async function blockToDocx(b: Block, fig: Map<string, number>, opts: BuildOptions): Promise<Child[]> {
+async function blockToDocx(
+  b: Block,
+  fig: Map<string, number>,
+  opts: BuildOptions,
+): Promise<Child[]> {
   const brand = opts.brand;
   switch (b.type) {
     case "heading": {
       const level =
-        b.level === 1 ? HeadingLevel.HEADING_1 : b.level === 3 ? HeadingLevel.HEADING_3 : HeadingLevel.HEADING_2;
+        b.level === 1
+          ? HeadingLevel.HEADING_1
+          : b.level === 3
+            ? HeadingLevel.HEADING_3
+            : HeadingLevel.HEADING_2;
       return [new Paragraph({ heading: level, children: runs(b.text ?? "") })];
     }
     case "paragraph":
@@ -208,7 +243,9 @@ async function blockToDocx(b: Block, fig: Map<string, number>, opts: BuildOption
               children: runs(p, { italic: true }),
             }),
         ),
-        ...(b.title ? [new Paragraph({ indent: { left: 567 }, children: runs(`– ${b.title}`, { size: 20 }) })] : []),
+        ...(b.title
+          ? [new Paragraph({ indent: { left: 567 }, children: runs(`– ${b.title}`, { size: 20 }) })]
+          : []),
       ];
     case "bullets":
       return (b.items ?? []).map(
@@ -221,7 +258,8 @@ async function blockToDocx(b: Block, fig: Map<string, number>, opts: BuildOption
       );
     case "checklist":
       return (b.items ?? []).map(
-        (it) => new Paragraph({ numbering: { reference: "checks", level: 0 }, children: runs(it.text) }),
+        (it) =>
+          new Paragraph({ numbering: { reference: "checks", level: 0 }, children: runs(it.text) }),
       );
     case "numbered":
       return numberedItems(b.items ?? [], false);
@@ -254,7 +292,10 @@ async function blockToDocx(b: Block, fig: Map<string, number>, opts: BuildOption
         new Paragraph({
           spacing: { before: 240 },
           keepNext: true,
-          children: [...iconRun(brand, ICON_FOR.video), ...runs(b.text ?? b.title ?? "Video", { bold: true })],
+          children: [
+            ...iconRun(brand, ICON_FOR.video),
+            ...runs(b.text ?? b.title ?? "Video", { bold: true }),
+          ],
         }),
         placeholderBox("VIDEO SUMMARY NEEDED", [
           `Add a short written summary of the video${b.title ? ` “${b.title}”` : ""}.`,
@@ -267,13 +308,19 @@ async function blockToDocx(b: Block, fig: Map<string, number>, opts: BuildOption
         new Paragraph({
           spacing: { before: 240 },
           keepNext: true,
-          children: [...iconRun(brand, ICON_FOR.question), new TextRun({ text: "Check your understanding", bold: true })],
+          children: [
+            ...iconRun(brand, ICON_FOR.question),
+            new TextRun({ text: "Check your understanding", bold: true }),
+          ],
         }),
         body(b.text ?? "", { bold: true, align: AlignmentType.LEFT }),
       ];
       (b.items ?? []).forEach((it, i) =>
         out.push(
-          new Paragraph({ indent: { left: 567 }, children: runs(`${String.fromCharCode(97 + i)}) ${it.text}`) }),
+          new Paragraph({
+            indent: { left: 567 },
+            children: runs(`${String.fromCharCode(97 + i)}) ${it.text}`),
+          }),
         ),
       );
       if (b.answer)
@@ -290,25 +337,28 @@ async function blockToDocx(b: Block, fig: Map<string, number>, opts: BuildOption
       if (!t || !t.headers.length) return [];
       const cols = Math.max(t.headers.length, ...t.rows.map((r) => r.length));
       const w = Math.floor(CONTENT_DXA / cols);
-      const widths = Array.from({ length: cols }, (_, i) => (i === cols - 1 ? CONTENT_DXA - w * (cols - 1) : w));
+      const widths = Array.from({ length: cols }, (_, i) =>
+        i === cols - 1 ? CONTENT_DXA - w * (cols - 1) : w,
+      );
       const border = { style: BorderStyle.SINGLE, size: 4, color: "D9D9D9" };
       const borders = { top: border, bottom: border, left: border, right: border };
       const cell = (text: string, i: number, header: boolean, shade: boolean) =>
         new TableCell({
-          width: { size: widths[i], type: WidthType.DXA },
+          width: { size: widths[i] ?? w, type: WidthType.DXA },
           borders,
           verticalAlign: VerticalAlign.TOP,
-          shading: header
-            ? { fill: RED, type: ShadingType.CLEAR, color: "auto" }
-            : shade
-              ? { fill: LIGHT, type: ShadingType.CLEAR, color: "auto" }
-              : undefined,
+          ...(header || shade
+            ? { shading: { fill: header ? RED : LIGHT, type: ShadingType.CLEAR, color: "auto" } }
+            : {}),
           margins: { top: 100, bottom: 100, left: 140, right: 140 },
           children: paragraphsOf(text || " ").map(
             (p) =>
               new Paragraph({
                 spacing: { after: 60, line: 300 },
-                children: runs(p, header ? { bold: true, color: "FFFFFF", size: 20 } : { size: 20 }),
+                children: runs(
+                  p,
+                  header ? { bold: true, color: "FFFFFF", size: 20 } : { size: 20 },
+                ),
               }),
           ),
         });
@@ -317,9 +367,15 @@ async function blockToDocx(b: Block, fig: Map<string, number>, opts: BuildOption
           width: { size: CONTENT_DXA, type: WidthType.DXA },
           columnWidths: widths,
           rows: [
-            new TableRow({ tableHeader: true, children: widths.map((_, i) => cell(t.headers[i] ?? "", i, true, false)) }),
+            new TableRow({
+              tableHeader: true,
+              children: widths.map((_, i) => cell(t.headers[i] ?? "", i, true, false)),
+            }),
             ...t.rows.map(
-              (r, ri) => new TableRow({ children: widths.map((_, i) => cell(r[i] ?? "", i, false, ri % 2 === 1)) }),
+              (r, ri) =>
+                new TableRow({
+                  children: widths.map((_, i) => cell(r[i] ?? "", i, false, ri % 2 === 1)),
+                }),
             ),
           ],
         }),
@@ -357,12 +413,17 @@ async function blockToDocx(b: Block, fig: Map<string, number>, opts: BuildOption
         children: [
           new Paragraph({
             alignment: AlignmentType.CENTER,
-            children: [imageRun(img, fit(img, Math.round(CONTENT_PX * 0.45), 380), b.caption ?? "Figure")],
+            children: [
+              imageRun(img, fit(img, Math.round(CONTENT_PX * 0.45), 380), b.caption ?? "Figure"),
+            ],
           }),
           ...caption(fig.get(b.id), b.caption),
         ],
       });
-      const spacer = new TableCell({ width: { size: gap, type: WidthType.DXA }, children: [new Paragraph({ children: [] })] });
+      const spacer = new TableCell({
+        width: { size: gap, type: WidthType.DXA },
+        children: [new Paragraph({ children: [] })],
+      });
       const txtCell = new TableCell({
         width: { size: txtW, type: WidthType.DXA },
         verticalAlign: VerticalAlign.CENTER,
@@ -374,7 +435,11 @@ async function blockToDocx(b: Block, fig: Map<string, number>, opts: BuildOption
           width: { size: CONTENT_DXA, type: WidthType.DXA },
           columnWidths: left ? [imgW, gap, txtW] : [txtW, gap, imgW],
           borders: noBorders(),
-          rows: [new TableRow({ children: left ? [imgCell, spacer, txtCell] : [txtCell, spacer, imgCell] })],
+          rows: [
+            new TableRow({
+              children: left ? [imgCell, spacer, txtCell] : [txtCell, spacer, imgCell],
+            }),
+          ],
         }),
         new Paragraph({ children: [] }),
       ];
@@ -418,7 +483,13 @@ export async function buildDocx(project: Project, opts: BuildOptions): Promise<B
     new Paragraph({
       spacing: { before: 2200 },
       alignment: AlignmentType.CENTER,
-      children: [new TextRun({ text: (project.courseName || "Course name").toUpperCase(), bold: true, size: 62 })],
+      children: [
+        new TextRun({
+          text: (project.courseName || "Course name").toUpperCase(),
+          bold: true,
+          size: 62,
+        }),
+      ],
     }),
     new Paragraph({
       spacing: { before: 600 },
@@ -479,21 +550,104 @@ export async function buildDocx(project: Project, opts: BuildOptions): Promise<B
     features: { updateFields: true },
     styles: {
       default: {
-        document: { run: { font: FONT, size: 22 }, paragraph: { spacing: { after: 160, line: 360 } } },
+        document: {
+          run: { font: FONT, size: 22 },
+          paragraph: { spacing: { after: 160, line: 360 } },
+        },
       },
       paragraphStyles: [
-        { id: "Heading1", name: "Heading 1", basedOn: "Normal", next: "Normal", quickFormat: true, run: { font: FONT, size: 40, bold: true, color: "000000" }, paragraph: { spacing: { before: 0, after: 320 }, outlineLevel: 0, keepNext: true } },
-        { id: "Heading2", name: "Heading 2", basedOn: "Normal", next: "Normal", quickFormat: true, run: { font: FONT, size: 32, bold: true, color: "000000" }, paragraph: { spacing: { before: 360, after: 200 }, outlineLevel: 1, keepNext: true } },
-        { id: "Heading3", name: "Heading 3", basedOn: "Normal", next: "Normal", quickFormat: true, run: { font: FONT, size: 24, bold: true, color: "000000" }, paragraph: { spacing: { before: 280, after: 120 }, outlineLevel: 2, keepNext: true } },
-        { id: "TOC1", name: "toc 1", basedOn: "Normal", next: "Normal", run: { font: FONT, bold: true, size: 22 }, paragraph: { spacing: { before: 120, after: 40 } } },
-        { id: "TOC2", name: "toc 2", basedOn: "Normal", next: "Normal", run: { font: FONT, size: 22 }, paragraph: { indent: { left: 360 }, spacing: { after: 40 } } },
+        {
+          id: "Heading1",
+          name: "Heading 1",
+          basedOn: "Normal",
+          next: "Normal",
+          quickFormat: true,
+          run: { font: FONT, size: 40, bold: true, color: "000000" },
+          paragraph: { spacing: { before: 0, after: 320 }, outlineLevel: 0, keepNext: true },
+        },
+        {
+          id: "Heading2",
+          name: "Heading 2",
+          basedOn: "Normal",
+          next: "Normal",
+          quickFormat: true,
+          run: { font: FONT, size: 32, bold: true, color: "000000" },
+          paragraph: { spacing: { before: 360, after: 200 }, outlineLevel: 1, keepNext: true },
+        },
+        {
+          id: "Heading3",
+          name: "Heading 3",
+          basedOn: "Normal",
+          next: "Normal",
+          quickFormat: true,
+          run: { font: FONT, size: 24, bold: true, color: "000000" },
+          paragraph: { spacing: { before: 280, after: 120 }, outlineLevel: 2, keepNext: true },
+        },
+        {
+          id: "TOC1",
+          name: "toc 1",
+          basedOn: "Normal",
+          next: "Normal",
+          run: { font: FONT, bold: true, size: 22 },
+          paragraph: { spacing: { before: 120, after: 40 } },
+        },
+        {
+          id: "TOC2",
+          name: "toc 2",
+          basedOn: "Normal",
+          next: "Normal",
+          run: { font: FONT, size: 22 },
+          paragraph: { indent: { left: 360 }, spacing: { after: 40 } },
+        },
       ],
     },
     numbering: {
       config: [
-        { reference: "bullets", levels: [{ level: 0, format: LevelFormat.BULLET, text: "●", alignment: AlignmentType.LEFT, style: { paragraph: { indent: { left: 720, hanging: 360 } }, run: { color: YELLOW, size: 16 } } }] },
-        { reference: "checks", levels: [{ level: 0, format: LevelFormat.BULLET, text: "☐", alignment: AlignmentType.LEFT, style: { paragraph: { indent: { left: 720, hanging: 360 } }, run: { color: RED, font: "Segoe UI Symbol" } } }] },
-        { reference: "numbers", levels: [{ level: 0, format: LevelFormat.DECIMAL, text: "%1.", alignment: AlignmentType.LEFT, style: { paragraph: { indent: { left: 720, hanging: 360 } }, run: { color: YELLOW, bold: true } } }] },
+        {
+          reference: "bullets",
+          levels: [
+            {
+              level: 0,
+              format: LevelFormat.BULLET,
+              text: "●",
+              alignment: AlignmentType.LEFT,
+              style: {
+                paragraph: { indent: { left: 720, hanging: 360 } },
+                run: { color: YELLOW, size: 16 },
+              },
+            },
+          ],
+        },
+        {
+          reference: "checks",
+          levels: [
+            {
+              level: 0,
+              format: LevelFormat.BULLET,
+              text: "☐",
+              alignment: AlignmentType.LEFT,
+              style: {
+                paragraph: { indent: { left: 720, hanging: 360 } },
+                run: { color: RED, font: "Segoe UI Symbol" },
+              },
+            },
+          ],
+        },
+        {
+          reference: "numbers",
+          levels: [
+            {
+              level: 0,
+              format: LevelFormat.DECIMAL,
+              text: "%1.",
+              alignment: AlignmentType.LEFT,
+              style: {
+                paragraph: { indent: { left: 720, hanging: 360 } },
+                run: { color: YELLOW, bold: true },
+              },
+            },
+          ],
+        },
       ],
     },
     sections: [
@@ -503,7 +657,10 @@ export async function buildDocx(project: Project, opts: BuildOptions): Promise<B
         headers: { default: header },
         footers: { default: footer },
         children: [
-          new Paragraph({ spacing: { after: 360 }, children: [new TextRun({ text: "Table of contents", bold: true, size: 52 })] }),
+          new Paragraph({
+            spacing: { after: 360 },
+            children: [new TextRun({ text: "Table of contents", bold: true, size: 52 })],
+          }),
           new TableOfContents("Table of contents", { hyperlink: true, headingStyleRange: "1-2" }),
           new Paragraph({ children: [new PageBreak()] }),
           ...content,

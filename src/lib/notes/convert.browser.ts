@@ -71,18 +71,32 @@ export async function convertPart(
   }
 }
 
-export function friendlyError(err: unknown): { message: string; stopAll: boolean; retryable: boolean } {
+export function friendlyError(err: unknown): {
+  message: string;
+  stopAll: boolean;
+  retryable: boolean;
+} {
   if (err instanceof ConvertError) {
     if (err.status === 402)
       return { message: `Out of AI credits: ${err.message}`, stopAll: true, retryable: false };
     if (err.status === 401 || err.status === 403)
       return { message: err.message, stopAll: true, retryable: false };
     if (err.status === 429)
-      return { message: "The AI is busy right now. Try this lesson again in a minute.", stopAll: false, retryable: true };
+      return {
+        message: "The AI is busy right now. Try this lesson again in a minute.",
+        stopAll: false,
+        retryable: true,
+      };
     if (err.status === 499) return { message: "Stopped.", stopAll: false, retryable: false };
-    if (err.status >= 500) return { message: err.message || "The AI had a problem.", stopAll: false, retryable: true };
+    if (err.status >= 500)
+      return { message: err.message || "The AI had a problem.", stopAll: false, retryable: true };
     return { message: err.message, stopAll: false, retryable: false };
   }
-  if (err instanceof DOMException && err.name === "AbortError") return { message: "Stopped.", stopAll: false, retryable: false };
-  return { message: err instanceof Error ? err.message : "Something went wrong.", stopAll: false, retryable: true };
+  if (err instanceof DOMException && err.name === "AbortError")
+    return { message: "Stopped.", stopAll: false, retryable: false };
+  return {
+    message: err instanceof Error ? err.message : "Something went wrong.",
+    stopAll: false,
+    retryable: true,
+  };
 }

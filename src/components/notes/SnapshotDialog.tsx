@@ -2,9 +2,16 @@ import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { loadPdf } from "@/lib/notes/storage.client";
+import { loadPdf } from "@/lib/notes/storage.browser";
 
 interface Rect {
   x: number;
@@ -47,7 +54,7 @@ export function SnapshotDialog({
     (async () => {
       const data = await loadPdf();
       if (!data) return;
-      const { renderPage } = await import("@/lib/pdf/extract.client");
+      const { renderPage } = await import("@/lib/pdf/extract.browser");
       const canvas = await renderPage(data, page, 1.4);
       if (alive) setPreview(canvas.toDataURL("image/jpeg", 0.85));
       setLoading(false);
@@ -71,12 +78,22 @@ export function SnapshotDialog({
     try {
       const data = await loadPdf();
       if (!data) return;
-      const { renderPage, canvasToBlob } = await import("@/lib/pdf/extract.client");
+      const { renderPage, canvasToBlob } = await import("@/lib/pdf/extract.browser");
       const full = await renderPage(data, page, 3);
       const c = document.createElement("canvas");
       c.width = Math.round(rect.w * full.width);
       c.height = Math.round(rect.h * full.height);
-      c.getContext("2d")!.drawImage(full, rect.x * full.width, rect.y * full.height, c.width, c.height, 0, 0, c.width, c.height);
+      c.getContext("2d")!.drawImage(
+        full,
+        rect.x * full.width,
+        rect.y * full.height,
+        c.width,
+        c.height,
+        0,
+        0,
+        c.width,
+        c.height,
+      );
       const blob = await canvasToBlob(c, "image/png");
       onPick(blob, c.width, c.height);
       onOpenChange(false);
@@ -90,10 +107,17 @@ export function SnapshotDialog({
       <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>Use part of a PDF page</DialogTitle>
-          <DialogDescription>Drag a box around the graphic you want to place in the notes.</DialogDescription>
+          <DialogDescription>
+            Drag a box around the graphic you want to place in the notes.
+          </DialogDescription>
         </DialogHeader>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" aria-label="Previous page" onClick={() => setPage((p) => Math.max(1, p - 1))}>
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label="Previous page"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div className="flex items-center gap-2 text-sm">
@@ -104,11 +128,18 @@ export function SnapshotDialog({
               min={1}
               max={pageCount}
               value={page}
-              onChange={(e) => setPage(Math.min(pageCount, Math.max(1, Number(e.target.value) || 1)))}
+              onChange={(e) =>
+                setPage(Math.min(pageCount, Math.max(1, Number(e.target.value) || 1)))
+              }
             />
             of {pageCount}
           </div>
-          <Button variant="outline" size="icon" aria-label="Next page" onClick={() => setPage((p) => Math.min(pageCount, p + 1))}>
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label="Next page"
+            onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+          >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
@@ -131,15 +162,30 @@ export function SnapshotDialog({
                 if (!drag.current) return;
                 const p = rel(e);
                 const s = drag.current;
-                setRect({ x: Math.min(s.x, p.x), y: Math.min(s.y, p.y), w: Math.abs(p.x - s.x), h: Math.abs(p.y - s.y) });
+                setRect({
+                  x: Math.min(s.x, p.x),
+                  y: Math.min(s.y, p.y),
+                  w: Math.abs(p.x - s.x),
+                  h: Math.abs(p.y - s.y),
+                });
               }}
               onPointerUp={() => (drag.current = null)}
             >
-              <img src={preview} alt={`PDF page ${page}`} className="block max-w-full" draggable={false} />
+              <img
+                src={preview}
+                alt={`PDF page ${page}`}
+                className="block max-w-full"
+                draggable={false}
+              />
               {rect && rect.w > 0 && (
                 <div
                   className="absolute border-2 border-brand-red bg-brand-red/10"
-                  style={{ left: `${rect.x * 100}%`, top: `${rect.y * 100}%`, width: `${rect.w * 100}%`, height: `${rect.h * 100}%` }}
+                  style={{
+                    left: `${rect.x * 100}%`,
+                    top: `${rect.y * 100}%`,
+                    width: `${rect.w * 100}%`,
+                    height: `${rect.h * 100}%`,
+                  }}
                 />
               )}
             </div>

@@ -81,10 +81,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Static Notes Studio – Red & Yellow" },
-      { name: "description", content: "Turn Rise lesson PDFs into branded Red & Yellow static notes in Word." },
+      {
+        name: "description",
+        content: "Turn Rise lesson PDFs into branded Red & Yellow static notes in Word.",
+      },
       { name: "author", content: "Red & Yellow Creative School of Business" },
       { property: "og:title", content: "Static Notes Studio – Red & Yellow" },
-      { property: "og:description", content: "Turn Rise lesson PDFs into branded Red & Yellow static notes in Word." },
+      {
+        property: "og:description",
+        content: "Turn Rise lesson PDFs into branded Red & Yellow static notes in Word.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

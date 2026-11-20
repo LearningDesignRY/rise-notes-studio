@@ -10,9 +10,17 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Static Notes Studio – Rise PDF to Red & Yellow notes" },
-      { name: "description", content: "Upload a Rise lesson PDF and download branded Red & Yellow static notes as a Word document." },
+      {
+        name: "description",
+        content:
+          "Upload a Rise lesson PDF and download branded Red & Yellow static notes as a Word document.",
+      },
       { property: "og:title", content: "Static Notes Studio – Rise PDF to Red & Yellow notes" },
-      { property: "og:description", content: "Upload a Rise lesson PDF and download branded Red & Yellow static notes as a Word document." },
+      {
+        property: "og:description",
+        content:
+          "Upload a Rise lesson PDF and download branded Red & Yellow static notes as a Word document.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -34,7 +42,9 @@ function Index() {
         </div>
       )}
       {api.phase === "empty" && <UploadPanel onFile={(f) => void api.start(f)} />}
-      {api.phase === "reading" && <ReadingPanel page={api.readProgress?.page ?? 0} total={api.readProgress?.total ?? 0} />}
+      {api.phase === "reading" && (
+        <ReadingPanel page={api.readProgress?.page ?? 0} total={api.readProgress?.total ?? 0} />
+      )}
     </div>
   );
 }

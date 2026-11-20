@@ -1,6 +1,14 @@
-import { lineText, type ImageEl, type PageContent, type PageElement, type TextLine, type TextRun } from "./model";
+import {
+  lineText,
+  type ImageEl,
+  type PageContent,
+  type PageElement,
+  type TextLine,
+  type TextRun,
+} from "./model";
 
-const NAV_LINE = /^(CONTINUE|SUBMIT|START|STARTCOURSE|TAKEAGAIN|RETRY|NEXT|PREVIOUS|NEXT:.*|PREV:.*|LESSON\d+OF\d+)$/i;
+const NAV_LINE =
+  /^(CONTINUE|SUBMIT|START|STARTCOURSE|TAKEAGAIN|RETRY|NEXT|PREVIOUS|NEXT:.*|PREV:.*|LESSON\d+OF\d+)$/i;
 const TOPIC_LINE = /^Topic\s+(\d+)\s+of\s+(\d+)$/i;
 const MAX_PART_CHARS = 45000;
 
@@ -73,7 +81,7 @@ export function serializeElements(elements: PageElement[]): string[] {
     });
     const b = dominant(runs, "bold");
     const it = dominant(runs, "italic");
-    const first = para[0];
+    const first = para[0]!;
     const tag = `[s=${first.size.toFixed(1)}${b ? " b" : ""}${it ? " i" : ""}] x=${Math.round(first.x)}`;
     const text = renderRuns(runs, b, it);
     if (text) out.push(`${tag} ${text}`);
@@ -90,9 +98,18 @@ export function serializeElements(elements: PageElement[]): string[] {
     const prev = para[para.length - 1];
     if (prev) {
       const gap = el.y - (prev.y + prev.size);
-      const aligned = Math.abs(el.x - para[0].x) < 6 || (el.x > para[0].x - 6 && el.x < para[0].x + 40 && para.length > 0 && Math.abs(el.x - prev.x) < 6);
+      const head = para[0]!;
+      const aligned =
+        Math.abs(el.x - head.x) < 6 ||
+        (el.x > head.x - 6 && el.x < head.x + 40 && Math.abs(el.x - prev.x) < 6);
       const startsNumbered = /^\[#\d+\]/.test(lineText(el));
-      if (sameStyle(prev, el) && aligned && gap < prev.size * 1.25 && gap > -prev.size * 0.5 && !startsNumbered) {
+      if (
+        sameStyle(prev, el) &&
+        aligned &&
+        gap < prev.size * 1.25 &&
+        gap > -prev.size * 0.5 &&
+        !startsNumbered
+      ) {
         para.push(el);
         continue;
       }
@@ -135,8 +152,8 @@ export function splitLessons(pages: PageContent[]): SplitResult {
     }
   }
   const m = moduleTitleRaw.match(/Module\s+(\d+)\s*[:\-–.]\s*(.+)/i);
-  const moduleNumber = m ? m[1] : "";
-  const moduleTitle = m ? m[2].trim() : moduleTitleRaw;
+  const moduleNumber = m?.[1] ?? "";
+  const moduleTitle = m?.[2] ? m[2].trim() : moduleTitleRaw;
 
   let courseName = "";
   outer: for (const p of pages.slice(0, 6)) {
@@ -147,7 +164,7 @@ export function splitLessons(pages: PageContent[]): SplitResult {
         .join(" "),
     );
     const cm = text.match(/Red\s*&\s*Yellow['’]s\s+(.+?)\s+(short\s+)?course/i);
-    if (cm) {
+    if (cm?.[1]) {
       courseName = cm[1].trim();
       break outer;
     }
@@ -159,7 +176,7 @@ export function splitLessons(pages: PageContent[]): SplitResult {
     for (let i = 0; i < pages.length; i += 12) {
       const slice = pages.slice(i, i + 12);
       sections.push({
-        title: `Pages ${slice[0].page}–${slice[slice.length - 1].page}`,
+        title: `Pages ${slice[0]!.page}–${slice[slice.length - 1]!.page}`,
         elements: slice.flatMap((p) => p.elements.map((el) => ({ page: p.page, el }))),
       });
     }
@@ -168,7 +185,7 @@ export function splitLessons(pages: PageContent[]): SplitResult {
       const next = markers[i + 1];
       const els: { page: number; el: PageElement }[] = [];
       for (let pi = mk.pageIdx; pi < (next ? next.pageIdx + 1 : pages.length); pi++) {
-        const p = pages[pi];
+        const p = pages[pi]!;
         p.elements.forEach((el, ei) => {
           if (pi === mk.pageIdx && ei <= mk.elIdx) return;
           if (next && pi === next.pageIdx && ei >= next.elIdx) return;
@@ -176,7 +193,8 @@ export function splitLessons(pages: PageContent[]): SplitResult {
         });
       }
       const titleEl = els.find((e) => e.el.kind === "text" && e.el.size >= 15);
-      const title = titleEl && titleEl.el.kind === "text" ? plain(lineText(titleEl.el)) : `Lesson ${i + 1}`;
+      const title =
+        titleEl && titleEl.el.kind === "text" ? plain(lineText(titleEl.el)) : `Lesson ${i + 1}`;
       sections.push({ title, elements: els });
     });
   }

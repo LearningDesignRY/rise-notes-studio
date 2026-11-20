@@ -1,5 +1,12 @@
 import type { RawBlock } from "./ai-schema";
-import { BLOCK_TYPES, CALLOUT_VARIANTS, type Block, type BlockType, type CalloutVariant, type Project } from "./types";
+import {
+  BLOCK_TYPES,
+  CALLOUT_VARIANTS,
+  type Block,
+  type BlockType,
+  type CalloutVariant,
+  type Project,
+} from "./types";
 
 let seq = 0;
 export function newId(prefix = "b"): string {
@@ -28,7 +35,11 @@ export function emptyBlock(type: BlockType): Block {
     text: null,
     title: null,
     variant: type === "callout" ? "quick_insight" : null,
-    items: ["bullets", "numbered", "checklist", "steps", "hotspot", "knowledge_check"].includes(type) ? [] : null,
+    items: ["bullets", "numbered", "checklist", "steps", "hotspot", "knowledge_check"].includes(
+      type,
+    )
+      ? []
+      : null,
     table: type === "table" ? { headers: ["Column 1", "Column 2"], rows: [["", ""]] } : null,
     imageId: null,
     imageSide: type === "image_text" ? "left" : null,
@@ -44,7 +55,9 @@ export function normalizeBlocks(raw: RawBlock[], knownImageIds: Set<string>): Bl
   for (const r of raw) {
     if (!r || !BLOCK_TYPES.includes(r.type as BlockType)) continue;
     let type = r.type as BlockType;
-    const variant = CALLOUT_VARIANTS.includes(r.variant as CalloutVariant) ? (r.variant as CalloutVariant) : null;
+    const variant = CALLOUT_VARIANTS.includes(r.variant as CalloutVariant)
+      ? (r.variant as CalloutVariant)
+      : null;
     let imageId = clean(r.image_id);
     let text = clean(r.text);
     if (IMAGE_TYPES.includes(type) && (!imageId || !knownImageIds.has(imageId))) {
@@ -59,14 +72,23 @@ export function normalizeBlocks(raw: RawBlock[], knownImageIds: Set<string>): Bl
           caption: stripFigurePrefix(clean(r.caption)),
           sourcePage: r.source_page ?? null,
         });
-        out.push({ ...emptyBlock("steps"), items: r.items.map((i) => ({ title: clean(i.title), text: i.text.trim() })) });
+        out.push({
+          ...emptyBlock("steps"),
+          items: r.items.map((i) => ({ title: clean(i.title), text: i.text.trim() })),
+        });
         continue;
       }
       type = "image_needed";
-      text = type === "image_needed" && r.type === "image_text" ? "Picture shown beside the text in Rise." : "Picture from the Rise lesson could not be extracted.";
+      text =
+        type === "image_needed" && r.type === "image_text"
+          ? "Picture shown beside the text in Rise."
+          : "Picture from the Rise lesson could not be extracted.";
       imageId = null;
     }
-    const items = r.items?.map((i) => ({ title: clean(i.title), text: (i.text ?? "").trim() })).filter((i) => i.text || i.title) ?? null;
+    const items =
+      r.items
+        ?.map((i) => ({ title: clean(i.title), text: (i.text ?? "").trim() }))
+        .filter((i) => i.text || i.title) ?? null;
     const block: Block = {
       id: newId(),
       type,
@@ -74,10 +96,20 @@ export function normalizeBlocks(raw: RawBlock[], knownImageIds: Set<string>): Bl
       text,
       title: clean(r.title),
       variant: type === "callout" ? (variant ?? "information") : null,
-      items: items && items.length ? items : ["bullets", "numbered", "checklist", "steps", "hotspot", "knowledge_check"].includes(type) ? [] : null,
+      items:
+        items && items.length
+          ? items
+          : ["bullets", "numbered", "checklist", "steps", "hotspot", "knowledge_check"].includes(
+                type,
+              )
+            ? []
+            : null,
       table:
         type === "table" && r.table
-          ? { headers: r.table.headers.map((h) => h.trim()), rows: r.table.rows.map((row) => row.map((c) => c.trim())) }
+          ? {
+              headers: r.table.headers.map((h) => h.trim()),
+              rows: r.table.rows.map((row) => row.map((c) => c.trim())),
+            }
           : null,
       imageId,
       imageSide: type === "image_text" ? (r.image_side === "right" ? "right" : "left") : null,
@@ -87,7 +119,12 @@ export function normalizeBlocks(raw: RawBlock[], knownImageIds: Set<string>): Bl
     };
     // Drop blocks with no content at all.
     const hasContent =
-      block.text || block.title || block.items?.length || block.table || block.imageId || block.type === "image_needed";
+      block.text ||
+      block.title ||
+      block.items?.length ||
+      block.table ||
+      block.imageId ||
+      block.type === "image_needed";
     if (!hasContent) continue;
     out.push(block);
   }
@@ -107,12 +144,15 @@ export function figureNumbers(project: Pick<Project, "lessons" | "settings">): M
   for (const lesson of project.lessons)
     for (const b of lesson.blocks) {
       if (!isExported(b, project)) continue;
-      if (["image", "image_text", "hotspot", "image_needed"].includes(b.type) && b.caption) map.set(b.id, ++n);
+      if (["image", "image_text", "hotspot", "image_needed"].includes(b.type) && b.caption)
+        map.set(b.id, ++n);
     }
   return map;
 }
 
 export function docxFileName(project: Pick<Project, "moduleNumber" | "moduleTitle">): string {
-  const title = (project.moduleTitle || "Static notes").replace(/[^\p{L}\p{N}]+/gu, "_").replace(/^_|_$/g, "");
+  const title = (project.moduleTitle || "Static notes")
+    .replace(/[^\p{L}\p{N}]+/gu, "_")
+    .replace(/^_|_$/g, "");
   return `${project.moduleNumber ? `M${project.moduleNumber}_` : ""}${title}.docx`;
 }

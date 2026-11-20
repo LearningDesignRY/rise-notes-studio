@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { loadImage } from "./storage.client";
+import { loadImage } from "./storage.browser";
 
 const cache = new Map<string, string>();
 const pending = new Map<string, Promise<string | null>>();
